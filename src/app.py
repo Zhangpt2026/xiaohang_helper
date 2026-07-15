@@ -1,8 +1,8 @@
 import streamlit as st
-from src.config import RECOMMENDED_QUESTIONS
-from src.data_loader import load_school_data, load_phone_directory
-from src.prompt import get_system_prompt, check_hard_rules
-from src.api import ask_xiaohang
+from config import RECOMMENDED_QUESTIONS
+from data_loader import load_school_data, load_phone_directory
+from prompt import get_system_prompt, check_hard_rules
+from api import ask_xiaohang
 
 def main():
     st.set_page_config(page_title="小航 · 校园信息查询 AI 助手", page_icon="📚")

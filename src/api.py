@@ -1,5 +1,5 @@
 import requests
-from src.config import API_URL, API_KEY
+from config import API_URL, API_KEY
 
 def ask_xiaohang(identity, question, school_data, get_system_prompt, check_hard_rules):
     if not question or not question.strip():
@@ -8,7 +8,6 @@ def ask_xiaohang(identity, question, school_data, get_system_prompt, check_hard_
     rule_response = check_hard_rules(question)
     if rule_response:
         return rule_response
-    
     system_prompt = get_system_prompt(identity, school_data)
     headers = {
         "Authorization": f"Bearer {API_KEY}",

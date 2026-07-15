@@ -1,5 +1,5 @@
 import os
-from src.config import DATA_DIR, DATA_FILES
+from config import DATA_DIR, DATA_FILES
 
 def load_school_data():
     content = ""
