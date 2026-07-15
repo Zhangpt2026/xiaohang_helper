@@ -5,14 +5,24 @@ def load_school_data():
     files = ["01_新生入学.md", "02_办事流程.md", "03_电话黄页.md", "04_应急防骗.md"]
     data_dir = "data"
     content = ""
+    missing_files = []
+    
     for fname in files:
         path = f"{data_dir}/{fname}"
         try:
             with open(path, "r", encoding="utf-8") as f:
                 content += f"\n\n=== {fname} ===\n" + f.read()
         except FileNotFoundError:
+            missing_files.append(fname)
             print(f"⚠ 文件不存在：{path}")
-    return content
+        except Exception as e:
+            missing_files.append(fname)
+            print(f"⚠ 读取文件失败 {path}: {str(e)}")
+    
+    if missing_files:
+        print(f"\n⚠ 警告：以下数据文件缺失，部分功能可能受影响：{', '.join(missing_files)}")
+    
+    return content, missing_files
 def get_system_prompt(identity, school_data):
     alias_dict = """
 【别名词典】
@@ -156,5 +166,5 @@ def chat(school_data):
         print(f"小航：{answer}\n")
 
 if __name__ == "__main__":
-    school_data = load_school_data()
+    school_data, missing_files = load_school_data()
     chat(school_data)
