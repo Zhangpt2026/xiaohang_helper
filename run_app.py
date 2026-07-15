@@ -7,6 +7,7 @@ import requests
 
 API_URL = "https://api.siliconflow.cn/v1/chat/completions"
 API_KEY = "sk-eisgfevoxkvnrqgubncjikuobqyohuzafrshvnmamtnobhzh"
+FAST_MODEL = "moonshotai/Kimi-K2.7-Code"
 
 DATA_DIR = "data"
 DATA_FILES = ["01_新生入学.md", "02_办事流程.md", "03_电话黄页.md", "04_应急防骗.md"]
@@ -44,30 +45,19 @@ ALIAS_DICT = """
 """
 
 HARD_RULES = """
-【防幻觉硬规则】
-1. 只能根据【学校资料】回答，资料里没有的明说"这个我没收录，建议拨打 0371-61911000 总值班室问一下"
+【规则】
+1. 只能根据【资料】回答，资料里没有的明说"这个我没收录，建议拨打 0371-61911000"
 2. 严禁编造电话号码、地址、办公时间、学费金额、人名
 3. 涉及金钱/转账，无条件提示"先联系辅导员核实，任何要求转账的都是诈骗"
-4. 涉及心理危机（自杀、不想活、活不下去等），立即给：12320-5 心理援助 + 学校心理咨询中心 + 告诉辅导员
+4. 涉及心理危机（自杀、不想活、活不下去等），立即给：12320-5 + 学校心理咨询中心 + 告诉辅导员
 5. 不接入学校系统（教务/一卡通/财务），被问"查我的成绩/课表/卡余额"礼貌拒绝
 6. 回答末尾标注 [来源:文件名]
 """
 
 ROLE_PROMPTS = {
-    "新生": """你是"小航"，郑州航空工业管理学院的校园信息查询 AI 助手。
-当前用户身份：大一新生。
-你像一位热心的大二学长，语气详细、口语化、多给鼓励。
-回答重点：把流程拆成具体步骤，涉及金钱/转账无条件提示防骗。""",
-    
-    "在校生": """你是"小航"，郑州航空工业管理学院的校园信息查询 AI 助手。
-当前用户身份：在校老生。
-你像一位办事老司机学长，语气简洁。
-回答重点：① 地点 ② 电话 ③ 所需材料 ④ 办结时间。""",
-    
-    "教师": """你是"小航"，郑州航空工业管理学院的校园信息查询 AI 助手。
-当前用户身份：教师。
-语气专业礼貌。
-回答重点：① 政策依据 ② 办事窗口 ③ 联系人。"""
+    "新生": "你是小航，郑州航院校园助手。用户是大一新生，像热心学长一样详细解答，口语化，多鼓励。",
+    "在校生": "你是小航，郑州航院校园助手。用户是老生，简洁回答，重点：地点、电话、材料、时间。",
+    "教师": "你是小航，郑州航院校园助手。用户是教师，专业礼貌，重点：政策依据、办事窗口、联系人。"
 }
 
 def load_school_data():
@@ -92,7 +82,7 @@ def load_phone_directory():
 
 def get_system_prompt(identity, school_data):
     role = ROLE_PROMPTS.get(identity, "你是小航校园助手。")
-    return f"{role}\n{HARD_RULES}\n{ALIAS_DICT}\n【学校资料】\n{school_data}"
+    return f"{role}\n{HARD_RULES}\n{ALIAS_DICT}\n【资料】\n{school_data}"
 
 def check_hard_rules(question):
     if any(keyword in question for keyword in ["查我的成绩", "查成绩", "我的课表", "课表", "卡余额", "余额"]):
@@ -115,11 +105,13 @@ def ask_xiaohang(identity, question, school_data):
         "Content-Type": "application/json"
     }
     data = {
-        "model": "deepseek-ai/DeepSeek-V4-Flash",
+        "model": FAST_MODEL,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": question.strip()}
-        ]
+        ],
+        "temperature": 0.3,
+        "max_tokens": 500
     }
     
     try:
@@ -132,63 +124,141 @@ def ask_xiaohang(identity, question, school_data):
             else:
                 return "API 返回格式错误"
         elif response.status_code == 401:
-            return "API Key 失效或未配置，请联系管理员检查"
+            return "API Key 失效或未配置"
         elif response.status_code == 403:
-            return "API 权限不足，请检查 Key 是否正确"
+            return "API 权限不足"
         elif response.status_code == 429:
             return "请求过于频繁，请稍后再试"
         else:
             return f"请求失败，状态码: {response.status_code}"
     
     except requests.exceptions.Timeout:
-        return "请求超时，请检查网络连接或稍后再试"
+        return "请求超时，请稍后重试"
     except requests.exceptions.ConnectionError:
-        return "网络连接失败，请检查网络设置"
+        return "网络连接失败"
     except Exception as e:
         return f"调用失败: {str(e)}"
 
 def main():
-    st.set_page_config(page_title="小航 · 校园信息查询 AI 助手", page_icon="📚")
+    st.set_page_config(
+        page_title="小航 · 校园信息查询 AI 助手", 
+        page_icon="📚",
+        menu_items={
+            'Get Help': None,
+            'Report a bug': None,
+            'About': None
+        }
+    )
     
-    st.title("小航 · 校园信息查询 AI 助手")
-    st.subheader("郑州航空工业管理学院专属")
+    st.markdown("""
+        <style>
+        .stDeployButton {display: none !important;}
+        .css-16huue1 {display: none !important;}
+        .css-1y4p8pa {padding-top: 0rem; padding-bottom: 0rem;}
+        .st-emotion-cache-1xarl3l {padding-top: 1rem;}
+        [data-testid="stToolbar"] {display: none !important;}
+        [data-testid="stDecoration"] {display: none !important;}
+        .st-emotion-cache-1pbsqtx {display: none !important;}
+        .st-emotion-cache-17eq0hr {display: none !important;}
+        .st-emotion-cache-1q35k3a {display: none !important;}
+        
+        .title-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+        
+        .stButton>button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .stButton>button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .chat-user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px 12px 0 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .chat-assistant {
+            background: #f0f2f6;
+            color: #333;
+            border-radius: 12px 12px 12px 0;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<h1 class="title-gradient">🎓 小航 · 校园信息查询 AI 助手</h1>', unsafe_allow_html=True)
+    st.subheader("郑州航空工业管理学院专属服务")
     
     school_data, missing_files = load_school_data()
     
     if missing_files:
-        st.warning(f"以下数据文件缺失：{', '.join(missing_files)}")
+        st.warning(f"⚠ 以下数据文件缺失：{', '.join(missing_files)}")
     
-    tab1, tab2 = st.tabs(["智能问答", "电话黄页"])
+    tab1, tab2 = st.tabs(["💬 智能问答", "📞 电话黄页"])
     
     with tab1:
-        identity = st.selectbox("请选择你的身份：", ["新生", "在校生", "教师"])
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("🎒 新生", key="btn_new"):
+                st.session_state.identity = "新生"
+        with col2:
+            if st.button("📚 在校生", key="btn_student"):
+                st.session_state.identity = "在校生"
+        with col3:
+            if st.button("👨‍🏫 教师", key="btn_teacher"):
+                st.session_state.identity = "教师"
+        
+        if "identity" not in st.session_state:
+            st.session_state.identity = "新生"
+        
+        identity = st.session_state.identity
+        st.info(f"当前身份：{identity}")
         
         if "messages" not in st.session_state:
             st.session_state.messages = []
         
-        st.write("**推荐问题：**")
-        for q in RECOMMENDED_QUESTIONS.get(identity, []):
-            if st.button(q, key=f"btn_{q}"):
-                st.session_state.messages.append({"role": "user", "content": q})
+        st.write("**✨ 推荐问题：**")
+        cols = st.columns(2)
+        for i, q in enumerate(RECOMMENDED_QUESTIONS.get(identity, [])):
+            with cols[i % 2]:
+                if st.button(q, key=f"btn_{q}", use_container_width=True):
+                    st.session_state.messages.append({"role": "user", "content": q})
+                    answer = ask_xiaohang(identity, q, school_data)
+                    st.session_state.messages.append({"role": "assistant", "content": answer})
         
         for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+            if message["role"] == "user":
+                st.markdown(f'<div class="chat-user">你：{message["content"]}</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="chat-assistant">小航：{message["content"]}</div>', unsafe_allow_html=True)
         
-        if prompt := st.chat_input("请问有什么可以帮你的？"):
+        if prompt := st.chat_input("💬 请问有什么可以帮你的？"):
             st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
+            st.markdown(f'<div class="chat-user">你：{prompt}</div>', unsafe_allow_html=True)
             
-            with st.chat_message("assistant"):
-                with st.spinner("小航正在思考..."):
-                    answer = ask_xiaohang(identity, prompt, school_data)
-                    st.markdown(answer)
-            
+            answer = ask_xiaohang(identity, prompt, school_data)
+            st.markdown(f'<div class="chat-assistant">小航：{answer}</div>', unsafe_allow_html=True)
             st.session_state.messages.append({"role": "assistant", "content": answer})
     
     with tab2:
-        st.header("📞 校园电话黄页")
+        st.markdown('<h2 style="color: #667eea;">📞 校园电话黄页</h2>', unsafe_allow_html=True)
         phone_content = load_phone_directory()
         st.markdown(phone_content)
 

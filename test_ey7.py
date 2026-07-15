@@ -4,14 +4,13 @@ from ey7 import ask_deepseek, ask_glm, validate_input, check_api_key
 
 def run_tests():
     test_results = []
-    
+
     print("=" * 60)
     print("ey7.py 异常处理测试")
     print("=" * 60)
-    
     test_cases = [
         ("测试1: 空输入", lambda: ask_deepseek(""), "错误：输入不能为空"),
-        ("测试2: 空白输入", lambda: ask_deepseek("   "), "错误：输入不能为空"),
+        ("测试2: 空白输入", lambda: ask_deepseek("   "),"错误：输入不能为空"),
         ("测试3: DeepSeek Key 失效检测", lambda: ask_deepseek("hello"), "API Key 未配置或无效"),
         ("测试4: GLM API 调用失败检测", lambda: ask_glm("hello"), "GLM 错误"),
         ("测试5: validate_input 空值", lambda: validate_input(""), (False, "错误：输入不能为空")),

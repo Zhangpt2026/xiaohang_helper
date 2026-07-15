@@ -1,0 +1,1 @@
+﻿import base64, sys; data = base64.b64decode(sys.argv[1]).decode(" utf-8\); open(r\C:\\Users\\刘雪晴\\PyCharmMiscProject\\chat_demo.py\, \w\, encoding=\utf-8\).write(data); print(\Done\)
