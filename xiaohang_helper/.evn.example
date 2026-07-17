@@ -1,0 +1,3 @@
+API_URL=https://api.siliconflow.cn/v1/chat/completions
+API_KEY=sk-eisgfevoxkvnrqgubncjikuobqyohuzafrshvnmamtnobhzh
+MODEL_NAME=Qwen/Qwen2.5-7B-Instruct
