@@ -1,31 +1,14 @@
-API_URL = "https://api.siliconflow.cn/v1/chat/completions"
-API_KEY = "sk-eisgfevoxkvnrqgubncjikuobqyohuzafrshvnmamtnobhzh"
+import os
+from dotenv import load_dotenv
 
-DATA_DIR = "data"
-DATA_FILES = [
-    "01_新生入学.md",
-    "02_办事流程.md",
-    "03_电话黄页.md",
-    "04_应急防骗.md"
-]
+load_dotenv()
 
-RECOMMENDED_QUESTIONS = {
-    "新生": [
-        "新生入学报到流程和需要准备的材料有哪些？",
-        "宿舍入住规则、设施维修和熄灯时间是怎样的？",
-        "校园卡充值、挂失和食堂/超市使用的相关问题？",
-        "一年学费多少，餐厅在哪？"
-    ],
-    "在校生": [
-        "课程退改选、成绩查询和绩点计算的相关规则？",
-        "校园网连接、带宽升级和故障报修的方式？",
-        "图书馆借阅、续借、馆藏查询和自习室预约？",
-        "校园内各类证明（在读、成绩）的办理流程？"
-    ],
-    "教师": [
-        "教室预约、多媒体设备使用和故障报修的流程？",
-        "学生成绩录入、教学任务安排和课表查询？",
-        "校园办公系统登录、公文流转和行政事务办理？",
-        "科研项目申报、经费报销和学术资源获取？"
-    ]
-}
+API_URL = os.getenv("API_URL", "https://api.siliconflow.cn/v1/chat/completions")
+API_KEY = os.getenv("API_KEY", "sk-eisgfevoxkvnrqgubncjikuobqyohuzafrshvnmamtnobhzh")
+FAST_MODEL = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
+
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+
+MAX_TOKENS = 3000
+TIMEOUT = 60
+TEMPERATURE = 0.3
